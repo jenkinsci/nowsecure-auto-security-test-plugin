@@ -144,9 +144,9 @@
 
     <developers>
         <developer>
-            <id>bhatti</id>
+            <id>nowsecure</id>
             <name>NowSecure, Inc.</name>
-            <email>info@nowsecure.com</email>
+            <email>support@nowsecure.com</email>
         </developer>
     </developers>
 
@@ -156,7 +156,7 @@
         <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
         <tag>HEAD</tag>
     </scm>
-    <url>https://wiki.jenkins.io/display/JENKINS/NowSecure+AUTO+Jenkins+Plugin</url>
+    <url>https://github.com/jenkinsci/nowsecure-auto-security-test-plugin</url>
     <repositories>
         <repository>
             <id>repo.jenkins-ci.org</id>
