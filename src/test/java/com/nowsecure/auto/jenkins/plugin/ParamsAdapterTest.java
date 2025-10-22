@@ -1,12 +1,15 @@
 package com.nowsecure.auto.jenkins.plugin;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.google.common.io.Files;
 import com.nowsecure.auto.domain.NSAutoParameters;
 import com.nowsecure.auto.domain.ProxySettings;
 import com.nowsecure.auto.utils.IOHelper;
@@ -14,12 +17,16 @@ import com.nowsecure.auto.utils.IOHelper;
 import hudson.AbortException;
 
 public class ParamsAdapterTest implements NSAutoParameters {
-    private String token = "token";
+	private static final String TEST_IPA_NAME = "test.ipa";
+	private static final String TEST_APK_NAME = "test.apk";
+    
     private String url = "https://lab-api.nowsecure.com";
-    private File workspace = new File("/tmp");
-    private File artifactsDir = new File("/tmp");
-    private File file = new File("/tmp/test.apk");
-    private String ipa = "/tmp/test.ipa";
+    private String token = "token";
+    private File workspace;
+    private File artifactsDir;
+    private File file;
+    private File ipaFile;
+    private File tmpDir;
     private String username;
     private String password;
     private boolean showStatusMessages;
@@ -32,20 +39,44 @@ public class ParamsAdapterTest implements NSAutoParameters {
 
     @Before
     public void setup() throws IOException {
-        new File(ipa).createNewFile();
-    }
+    	tmpDir = Files.createTempDir();
+    	tmpDir.deleteOnExit();
+    	artifactsDir = tmpDir;
+    	workspace = tmpDir;
+        ipaFile = new File(tmpDir.getAbsolutePath() + "/" + TEST_IPA_NAME);
+        try (FileWriter writer = new FileWriter(ipaFile);) {
+        	//cannot be zero length or verify of file may be false
+        	writer.write("Hello world!");
+        }
+        ipaFile.deleteOnExit();
+        file = new File(workspace.getAbsolutePath() + "/" + TEST_APK_NAME);
+        try (FileWriter writer = new FileWriter(file);) {
+        	//cannot be zero length or verify of file may be false
+        	writer.write("Hello world!");
+        }
+        file.deleteOnExit();
 
+    }
+    
+    @After
+    public void tearDown() {
+    	ipaFile.delete();
+    	file.delete();
+    	tmpDir.delete();
+    	artifactsDir.delete();
+    	tmpDir.delete();
+    }
+    
     @Test
     public void testConstructor() throws Exception {
-        File dir = new File("/tmp/archive");
-        ParamsAdapter param = new ParamsAdapter(this, "newToken", workspace, dir, ipa, true, true, "pluginName", "bill",
+        ParamsAdapter param = new ParamsAdapter(this, "newToken", tmpDir, tmpDir, ipaFile.getAbsolutePath(), true, true, "pluginName", "bill",
                 "pass", true, "stop", new ProxySettings(), true);
         Assert.assertEquals("newToken", param.getApiKey());
         Assert.assertNotNull(param.getApiUrl());
         Assert.assertEquals("desc", param.getDescription());
         Assert.assertEquals("group", param.getGroup());
-        Assert.assertEquals(dir, param.getArtifactsDir());
-        Assert.assertEquals(new File(ipa), param.getFile());
+        Assert.assertEquals(tmpDir, param.getArtifactsDir());
+        Assert.assertEquals(ipaFile, param.getFile());
         Assert.assertEquals(30, param.getWaitMinutes());
         Assert.assertEquals(70, param.getScoreThreshold());
         Assert.assertEquals("pass", param.getPassword());
@@ -56,16 +87,15 @@ public class ParamsAdapterTest implements NSAutoParameters {
 
     @Test
     public void testConstructorWithScore() throws Exception {
-        File dir = new File("/tmp/archive");
-        ParamsAdapter param = new ParamsAdapter(this, "newToken", workspace, dir, ipa, true, true, "pluginName",
+        ParamsAdapter param = new ParamsAdapter(this, "newToken", workspace, tmpDir, ipaFile.getAbsolutePath(), true, true, "pluginName",
                 username, password, showStatusMessages, stopTestsForStatusMessage, new ProxySettings(), false);
 
         Assert.assertEquals("newToken", param.getApiKey());
         Assert.assertNotNull(param.getApiUrl());
         Assert.assertEquals("desc", param.getDescription());
         Assert.assertEquals("group", param.getGroup());
-        Assert.assertEquals(dir, param.getArtifactsDir());
-        Assert.assertEquals(new File(ipa), param.getFile());
+        Assert.assertEquals(tmpDir, param.getArtifactsDir());
+        Assert.assertEquals(ipaFile, param.getFile());
         score = 60;
         minutes = 40;
         Assert.assertEquals(40, param.getWaitMinutes());
@@ -74,45 +104,42 @@ public class ParamsAdapterTest implements NSAutoParameters {
 
     @Test
     public void testConstructorWait() throws Exception {
-        File dir = new File("/tmp/archive");
-        ParamsAdapter param = new ParamsAdapter(this, "newToken", workspace, dir, ipa, false, true, "pluginName",
+        ParamsAdapter param = new ParamsAdapter(this, "newToken", workspace, tmpDir, ipaFile.getAbsolutePath(), false, true, "pluginName",
                 username, password, showStatusMessages, stopTestsForStatusMessage, new ProxySettings(), true);
         Assert.assertEquals("newToken", param.getApiKey());
         Assert.assertNotNull(param.getApiUrl());
         Assert.assertEquals("desc", param.getDescription());
         Assert.assertEquals("group", param.getGroup());
-        Assert.assertEquals(dir, param.getArtifactsDir());
-        Assert.assertEquals(new File(ipa), param.getFile());
+        Assert.assertEquals(tmpDir, param.getArtifactsDir());
+        Assert.assertEquals(ipaFile, param.getFile());
         Assert.assertEquals(30, param.getWaitMinutes());
         Assert.assertEquals(0, param.getScoreThreshold());
     }
 
     @Test
     public void testConstructorScore() throws Exception {
-        File dir = new File("/tmp/archive");
-        ParamsAdapter param = new ParamsAdapter(this, "newToken", workspace, dir, ipa, true, false, "pluginName",
+        ParamsAdapter param = new ParamsAdapter(this, "newToken", workspace, tmpDir, ipaFile.getAbsolutePath(), true, false, "pluginName",
                 username, password, showStatusMessages, stopTestsForStatusMessage, new ProxySettings(), false);
         Assert.assertEquals("newToken", param.getApiKey());
         Assert.assertNotNull(param.getApiUrl());
         Assert.assertEquals("desc", param.getDescription());
         Assert.assertEquals("group", param.getGroup());
-        Assert.assertEquals(dir, param.getArtifactsDir());
-        Assert.assertEquals(new File(ipa), param.getFile());
+        Assert.assertEquals(tmpDir, param.getArtifactsDir());
+        Assert.assertEquals(ipaFile, param.getFile());
         Assert.assertEquals(0, param.getWaitMinutes());
         Assert.assertEquals(0, param.getScoreThreshold());
     }
 
     @Test
     public void testConstructorNoWait() throws Exception {
-        File dir = new File("/tmp/archive");
-        ParamsAdapter param = new ParamsAdapter(this, "newToken", workspace, dir, ipa, false, false, "pluginName",
+        ParamsAdapter param = new ParamsAdapter(this, "newToken", workspace, tmpDir, ipaFile.getAbsolutePath(), false, false, "pluginName",
                 username, password, showStatusMessages, stopTestsForStatusMessage, new ProxySettings(), true);
         Assert.assertEquals("newToken", param.getApiKey());
         Assert.assertNotNull(param.getApiUrl());
         Assert.assertEquals("desc", param.getDescription());
         Assert.assertEquals("group", param.getGroup());
-        Assert.assertEquals(dir, param.getArtifactsDir());
-        Assert.assertEquals(new File(ipa), param.getFile());
+        Assert.assertEquals(tmpDir, param.getArtifactsDir());
+        Assert.assertEquals(ipaFile, param.getFile());
         Assert.assertEquals(0, param.getWaitMinutes());
         Assert.assertEquals(0, param.getScoreThreshold());
     }
@@ -120,67 +147,63 @@ public class ParamsAdapterTest implements NSAutoParameters {
     @Test(expected = AbortException.class)
     public void testConstructorNullToken() throws Exception {
         token = null;
-        new ParamsAdapter(this, null, new File("/tmp/archive"), new File("/tmp/test.ipa"), "binary ", true, true, null,
+        new ParamsAdapter(this, null, tmpDir, ipaFile, "binary ", true, true, null,
                 username, password, showStatusMessages, stopTestsForStatusMessage, new ProxySettings(), true);
     }
 
     @Test(expected = AbortException.class)
     public void testConstructorBinary() throws Exception {
         token = null;
-        new ParamsAdapter(this, "xxxx", new File("/tmp/archive"), new File("/tmp/test.ipa"), null, true, true, null,
+        new ParamsAdapter(this, "xxxx", tmpDir, ipaFile, null, true, true, null,
                 username, password, showStatusMessages, stopTestsForStatusMessage, new ProxySettings(), false);
     }
 
     @Test(expected = AbortException.class)
     public void testConstructorEmptyToken() throws Exception {
         token = null;
-        new ParamsAdapter(this, "", new File("/tmp/archive"), new File("/tmp/test.ipa"), "binary ", true, true, null,
+        new ParamsAdapter(this, "", tmpDir, ipaFile, "binary ", true, true, null,
                 username, password, showStatusMessages, stopTestsForStatusMessage, new ProxySettings(), true);
     }
 
     @Test
     public void testHasFile() throws Exception {
-        File dir = new File("/tmp/tmp");
-        dir.mkdirs();
-        File file = new File(dir, "tst");
-        file.createNewFile();
-        Assert.assertTrue(ParamsAdapter.hasFile(file.getParentFile(), new File("."), file.getName(), "name"));
-        file.delete();
-        dir.delete();
+        Assert.assertTrue(ParamsAdapter.hasFile(this.file.getParentFile(), new File("."), this.file.getName(), "name"));
     }
 
     @Test
     public void testHasFileAbsoluteNonExistant() throws Exception {
-        File dir = new File("/tmp/tmp");
-        File file = new File("/tmp/xxx/xxx");
+    	File differentDir = Files.createTempDir();
+    	differentDir.deleteOnExit();
+    	File tmpFile = new File(differentDir, "tmpxxxx");
+    	tmpFile.createNewFile();
+    	String tmpFilePath = tmpFile.getAbsolutePath();
+    	tmpFile.deleteOnExit();
+    	tmpFile.delete();
+    	differentDir.delete();
+    	System.out.println(tmpDir.getAbsolutePath());
+    	System.out.println(tmpFile.getAbsolutePath());
         Assert.assertFalse(
-                ParamsAdapter.hasFile(file.getParentFile(), new File("/tmpxxxx"), file.getAbsolutePath(), "name"));
-        file.delete();
-        dir.delete();
+                ParamsAdapter.hasFile(workspace, tmpDir, tmpFilePath, "name"));
     }
 
     @Test
     public void testHasFileAbsolute() throws Exception {
-        File dir = new File("/tmp/tmp");
-        dir.mkdirs();
-        File file = new File(dir, "tst");
+        File file = new File(tmpDir, "tst");
         file.createNewFile();
-        Assert.assertTrue(ParamsAdapter.hasFile(file.getParentFile(), new File("."), file.getAbsolutePath(), "name"));
+        file.deleteOnExit();
+        Assert.assertTrue(ParamsAdapter.hasFile(tmpDir, new File("."), file.getAbsolutePath(), "name"));
         file.delete();
-        dir.delete();
     }
 
     @Test
     public void testHasFileNonExistant() throws Exception {
-        File dir = new File("/tmp/tmp");
-        File file = new File(dir, "tst");
-        Assert.assertFalse(ParamsAdapter.hasFile(file.getParentFile(), dir, file.getName(), "name"));
-        dir.delete();
+        File file = new File(tmpDir, "tst");
+        Assert.assertFalse(ParamsAdapter.hasFile(file.getParentFile(), tmpDir, file.getName(), "name"));
     }
 
     @Test
     public void testToString() throws Exception {
-        ParamsAdapter params = new ParamsAdapter(this, "", new File("/tmp/archive"), new File("/tmp/test.ipa"),
+        ParamsAdapter params = new ParamsAdapter(this, "", tmpDir, ipaFile,
                 "binary ", true, true, null, username, password, showStatusMessages, stopTestsForStatusMessage,
                 new ProxySettings(), true);
         Assert.assertNotNull(params.toString());

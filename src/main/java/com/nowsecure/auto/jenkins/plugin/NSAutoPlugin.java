@@ -80,7 +80,7 @@ public class NSAutoPlugin extends Builder implements SimpleBuildStep, NSAutoPara
     private ProxySettings proxySettings = new ProxySettings();
     private boolean debug;
     private boolean proxyEnabled;
-    private Boolean validateDnsUrlConnection = true;
+    private Boolean validateDnsUrlConnectionEnabled = true;
 
     private static class Logger implements NSAutoLogger, Serializable {
         private static final long serialVersionUID = 1L;
@@ -132,7 +132,7 @@ public class NSAutoPlugin extends Builder implements SimpleBuildStep, NSAutoPara
     @DataBoundConstructor
     public NSAutoPlugin(String apiUrl, String group, String binaryName, String description, boolean waitForResults,
             int waitMinutes, boolean breakBuildOnScore, int scoreThreshold, String apiKey, boolean useBuildEndpoint,
-            boolean validateDnsUrlConnection) {
+            boolean validateDnsUrlConnectionEnabled) {
         this.apiUrl = apiUrl;
         this.group = group;
         this.binaryName = binaryName;
@@ -143,7 +143,7 @@ public class NSAutoPlugin extends Builder implements SimpleBuildStep, NSAutoPara
         this.scoreThreshold = scoreThreshold;
         this.apiKey = apiKey;
         this.useBuildEndpoint = useBuildEndpoint;
-        this.validateDnsUrlConnection = validateDnsUrlConnection;
+        this.validateDnsUrlConnectionEnabled = validateDnsUrlConnectionEnabled;
     }
 
     /*
@@ -362,17 +362,18 @@ public class NSAutoPlugin extends Builder implements SimpleBuildStep, NSAutoPara
         this.proxyEnabled = proxyEnabled;
     }
 
+    
     @Override
     public boolean isValidateDnsUrlConnectionEnabled() {
-        if (validateDnsUrlConnection == null) {
-            validateDnsUrlConnection = true;
+        if (validateDnsUrlConnectionEnabled == null) {
+            validateDnsUrlConnectionEnabled = true;
         }
-        return validateDnsUrlConnection;
+        return validateDnsUrlConnectionEnabled;
     }
 
     @DataBoundSetter
-    public void setValidateDnsUrlConnectionEnabled(boolean validateDnsUrlConnection) {
-        this.validateDnsUrlConnection = validateDnsUrlConnection;
+    public void setValidateDnsUrlConnectionEnabled(boolean validateDnsUrlConnectionEnabled) {
+        this.validateDnsUrlConnectionEnabled = validateDnsUrlConnectionEnabled;
     }
 
     @SuppressWarnings("deprecation")
@@ -496,7 +497,7 @@ public class NSAutoPlugin extends Builder implements SimpleBuildStep, NSAutoPara
 
     }
 
-    @Symbol({ "apiKey", "apiUrl", "binaryName", "group", "artifactsDir" })
+    @Symbol({"NowSecure-Auto-Plugin"})
     @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
         public FormValidation doValidateParams(@QueryParameter("apiKey") String apiKey,

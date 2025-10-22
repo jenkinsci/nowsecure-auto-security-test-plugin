@@ -1,0 +1,6 @@
+<dependency>
+    <groupId>com.nowsecure</groupId>
+    <artifactId>auto-circleci-plugin</artifactId>
+    <version>1.2.1</version>
+    <modelVersion>4.0.0</modelVersion>
+</dependency>

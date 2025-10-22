@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Map;
 import java.util.SortedMap;
 
 import org.acegisecurity.AccessDeniedException;
@@ -147,7 +148,11 @@ public class NSAutoPluginTest {
         };
         Assert.assertNull(NSAutoPlugin.normalize(run, null));
         Assert.assertEquals("test", NSAutoPlugin.normalize(run, "test"));
-        Assert.assertNotEquals("${HOME}", NSAutoPlugin.normalize(run, "${HOME}"));
+        //if this does not exist, it will pass equals and fails here  Is this a control test?  Might as well check 'em all
+        Map<String, String> envs = System.getenv();
+        for (String key : envs.keySet()) {
+        	Assert.assertNotEquals("${" + key + "}", NSAutoPlugin.normalize(run, "${" + key + "}"));
+        }
         Assert.assertEquals("${test}", NSAutoPlugin.normalize(run, "${test}"));
     }
 
